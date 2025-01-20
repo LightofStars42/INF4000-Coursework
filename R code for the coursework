@@ -1,0 +1,337 @@
+#This project is for Introduction to Data Science Coursework
+
+#this is to launch package in R
+install.packages("caret")
+install.packages("car")
+install.packages("gridExtra")
+#install.packages("factoextra")
+#install.packages("fmsb")
+#library(fmsb)
+library(factoextra)
+library(tidyverse)
+library(readr)
+library(car)
+library(caret)
+library(gridExtra)
+library(grid)
+library(MASS)
+library(scales)
+#--------------------------------- Import the data ----------------------------
+#this is for import multiple data set into r for further analysis
+#this step is for setting the working direction of popularity
+setwd("D:/Modules/Introduction of Data Science/Coursework_dataset/musicoset_popularity")
+song_popularity <- read.csv("song_pop.CSV",sep = "\t", header = T)
+
+#this step is for setting the working direction of metadata
+setwd("D:/Modules/Introduction of Data Science/Coursework_dataset/musicoset_metadata")
+songs <- read.csv("songs.csv",sep ="\t",header = T)
+
+#this step is for setting the working direction of acoustic features
+setwd("D:/Modules/Introduction of Data Science/Coursework_dataset/musicoset_songfeatures")
+acoustic <- read.csv("acoustic_features.csv",sep ="\t",header = T)
+lyrics <- read.csv("lyrics.csv",sep ="\t",header = T)
+View(acoustic)
+summary(acoustic)
+View(songs)
+View(song_popularity)
+
+#---------------------------------Preprocess the data---------------------------
+#combine all the variables in need
+pop_1 <- merge(x = acoustic, y = songs, by = "song_id")
+pop_raw <- merge(x= pop_1, y = song_popularity, by = "song_id")
+View(pop_raw)
+nrow(pop_raw)
+#clean the missing data
+pop <- na.omit(pop_raw)
+nrow(pop) #the missing value checked
+view(pop)
+summary(pop)
+
+#--------------Discover the frequecy distribution of popularity-----------------
+ ggplot(pop, aes(x = popularity)) +
+  geom_histogram(aes(y = ..count../sum(..count..)),
+                 binwidth = 2, 
+                 fill = "lightblue", 
+                 color = "white", 
+                 alpha = 0.8) +
+  geom_density(aes(y = ..density.. * 2),color = "darkred", size = 1) +
+  labs(title = "Density and Frequency Distribution of Popularity", 
+       x = "POPULARITY", 
+       y = "DENSITY"
+#       ,caption = "MUSICOSET"
+       ) +
+  scale_y_continuous(labels = percent_format(),
+                     breaks = seq(0, 0.04, by = 0.02),
+                     limits = c(0, 0.04)) + 
+  scale_x_continuous(breaks = seq(0, 100, by = 25), 
+                     limits = c(0, 100)) +
+  theme_minimal()+
+  theme(
+    panel.grid.major = element_blank(), 
+    panel.grid.minor = element_blank(),
+    panel.background = element_blank(), 
+    axis.title = element_text(size = 12
+#                              , face = "bold"
+                              ), 
+    axis.text = element_text(size = 10)
+  )
+
+
+#---------------comparing each features correlation between popularity----------
+#see the correlation between these variables and popularity
+#variables include duration_ms, key, acousticness, danceability, energy, instrumentalness,liveness,loudness, speechiness
+plot1 <- ggplot(pop, aes(x = duration_ms/ 60000, y = popularity)) + #Reduce the density of x axis
+  geom_point(color = "lightblue") +
+  geom_smooth(method = "lm", color = "darkred")+
+  scale_y_continuous(breaks = seq(0, 100, by = 50),
+                     limits = c(0, 100))+                           #make all the y axis text share the same range 
+  labs(x = "DURATION(MIN)",y = NULL)+                               #remove all the y axis text
+  theme_minimal()+
+  theme(
+    panel.grid.major = element_blank(), 
+    panel.grid.minor = element_blank(),
+    panel.background = element_blank(), 
+    axis.title = element_text(size = 10), 
+    axis.text = element_text(size = 10)
+  )
+plot2 <- ggplot(pop, aes(x = factor(key), y = popularity)) +
+  geom_boxplot(fill = "lightblue", outlier.color = "darkred") +
+  labs( x = "KEY",y = NULL) +
+  scale_y_continuous(breaks = seq(0, 100, by = 50),
+                     limits = c(0, 100))+
+  theme_minimal()+
+  theme(
+    panel.grid.major = element_blank(), 
+    panel.grid.minor = element_blank(),
+    panel.background = element_blank(), 
+    axis.title = element_text(size = 10), 
+    axis.text = element_text(size = 10)
+  )
+plot3 <- ggplot(pop, aes(x = factor(round(acousticness, 1)), y = popularity)) +
+  geom_violin(fill = "lightblue") +
+  labs( x = "ACOUSTICNESS",y = NULL) +
+  scale_y_continuous(breaks = seq(0, 100, by = 50),
+                     limits = c(0, 100))+
+  theme_minimal()+
+  theme(
+    panel.grid.major = element_blank(), 
+    panel.grid.minor = element_blank(),
+    panel.background = element_blank(), 
+    axis.title = element_text(size = 10), 
+    axis.text = element_text(size = 10)
+  )
+plot4 <- ggplot(pop, aes(x = danceability, y = popularity)) +
+  geom_point(color = "lightblue") +
+  geom_smooth(method = "lm", color = "darkred")+
+  labs(x= "DANCEABILITY",y = NULL)+
+  scale_y_continuous(breaks = seq(0, 100, by = 50),
+                     limits = c(0, 100))+
+  theme_minimal()+
+  theme(
+    panel.grid.major = element_blank(), 
+    panel.grid.minor = element_blank(),
+    panel.background = element_blank(), 
+    axis.title = element_text(size = 10), 
+    axis.text = element_text(size = 10)
+  )
+plot5 <- ggplot(pop, aes(x = energy, y = popularity)) +
+  geom_point(color = "lightblue") +
+  geom_smooth(method = "lm", color = "darkred")+
+  scale_y_continuous(breaks = seq(0, 100, by = 50),
+                     limits = c(0, 100))+
+  labs(x= "ENERGY", y = NULL)+
+  theme_minimal()+
+  theme(
+    panel.grid.major = element_blank(), 
+    panel.grid.minor = element_blank(),
+    panel.background = element_blank(), 
+    #axis.title.y = element_text(size = 20), 
+    axis.text = element_text(size = 10)
+  )
+plot6 <- ggplot(pop, aes(x = factor(round(instrumentalness, 1)), y = popularity)) +
+  geom_violin(fill = "lightblue") +
+  labs(x = "INSTRUMENTALNESS",y = NULL) +
+  scale_y_continuous(breaks = seq(0, 100, by = 50),
+                     limits = c(0, 100))+
+  theme_minimal()+
+  theme(
+    panel.grid.major = element_blank(), 
+    panel.grid.minor = element_blank(),
+    panel.background = element_blank(), 
+    axis.title = element_text(size = 10), 
+    axis.text = element_text(size = 10)
+  )
+plot7 <- ggplot(pop, aes(x = liveness, y = popularity)) +
+  geom_point(color = "lightblue") +
+  geom_smooth(method = "lm", color = "darkred")+
+  labs(x = "LIVENESS", y = NULL) +
+  scale_y_continuous(breaks = seq(0, 100, by = 50),
+                     limits = c(0, 100))+
+  theme_minimal()+
+  theme(
+    panel.grid.major = element_blank(), 
+    panel.grid.minor = element_blank(),
+    panel.background = element_blank(), 
+    axis.title = element_text(size = 10), 
+    axis.text = element_text(size = 10)
+  )
+plot8 <- ggplot(pop, aes(x = loudness , y = popularity)) +
+  geom_point(color = "lightblue") +
+  geom_smooth(method = "lm", color = "darkred")+
+  labs(x = "LOUDNESS",y = NULL) +
+  scale_y_continuous(breaks = seq(0, 100, by = 50),
+                     limits = c(0, 100))+
+  #scale_X_continuous(breaks = seq(0, 100, by = 20),
+  #                   limits = c(0, 100))+
+  theme_minimal()+
+  theme(
+    panel.grid.major = element_blank(), 
+    panel.grid.minor = element_blank(),
+    panel.background = element_blank(), 
+    axis.title = element_text(size = 10), 
+    axis.text = element_text(size = 10)
+  )
+plot9 <- ggplot(pop, aes(x = speechiness , y = popularity)) +
+  geom_point(color = "lightblue") +
+  geom_smooth(method = "lm", color = "darkred")+
+  labs(x = "SPEECHINESS",y = NULL) +
+  scale_y_continuous(breaks = seq(0, 100, by = 50),
+                     limits = c(0, 100))+
+  theme_minimal()+
+  theme(
+    panel.grid.major = element_blank(), 
+    panel.grid.minor = element_blank(),
+    panel.background = element_blank(), 
+    axis.title = element_text(size = 10), 
+    axis.text = element_text(size = 10)
+  )
+#reoder 819547,362
+#grid.arrange(plot8,plot1,plot9,plot5,plot4,plot7,plot3,plot6,plot2,ncol = 3,
+#             top = textGrob("Correlation Tests of the Features", gp = gpar(fontface = "bold", fontsize = 16)),
+#             #bottom = "Musicoset Dataset",
+#             left = textGrob("POPULARITY\n(ALL SHARE THE SAME RANGE)", rot = 90, gp = gpar( fontface = "bold",fontsize = 12)))
+
+plot_res_2 <- grid.arrange(plot8,plot1,plot3,plot6,ncol = 2,
+             top = textGrob("Correlation Tests of the Features", gp = gpar(
+#               fontface = "bold", 
+               fontsize = 14)),
+             #bottom = "Musicoset Dataset",
+             left = textGrob("POPULARITY\n(ALL SHARE THE SAME RANGE)", rot = 90, gp = gpar( 
+#               fontface = "bold",
+               fontsize = 14)))
+
+
+plot_res_3 <- ggplot(pop, aes(x = factor(key), y = popularity,fill = factor(key))) +
+  geom_boxplot(aes(fill = key))+
+#               color = "black",
+#               outlier.colour = "black",)+
+  labs( x = "KEY",y = "POPULARITY",
+        title = "Popularity And Key"
+#        ,caption = "MUSICOSET"
+        ) +
+  scale_fill_gradient(low = "lightblue", high = "#FFCC99",name = "High Pitch") +
+  
+  scale_y_continuous(breaks = seq(0, 100, by = 50),
+                     limits = c(0, 100))+
+  theme_minimal()+
+  theme(
+    panel.grid.major = element_blank(), 
+    panel.grid.minor = element_blank(),
+    panel.background = element_blank(), 
+    axis.title = element_text(size = 10), 
+    axis.text = element_text(size = 10)
+  )
+
+#---------heatmap to see the relationship between all the variables and popularity--------
+#selected_columns <- pop[, c("popularity", "duration_ms", "key", "acousticness", "danceability", 
+#                                  "energy", "instrumentalness", "liveness", "loudness", "speechiness")]
+
+# caculate matrix
+#cor_matrix <- cor(selected_columns)
+
+# draw heatmap
+#install.packages("pheatmap")
+#library(pheatmap)
+#cor_matrix <- cor(selected_columns)
+
+#colnames(cor_matrix) <- toupper(colnames(cor_matrix))
+#rownames(cor_matrix) <- toupper(rownames(cor_matrix))
+
+# Create the heatmap with aesthetically pleasing settings
+#png("D:/R_R studio/Practice Worksheet/heatmap_image.png", width = 600, height = 600)
+#pheatmap(cor_matrix, 
+#         cluster_rows = TRUE,          # Cluster rows
+#         cluster_cols = TRUE,          # Cluster columns
+#         color = colorRampPalette(c("lightgreen", "white", "lightblue"))(100),  # Gradient color scheme
+#         display_numbers = FALSE,       # Display numbers in the cells
+#         number_format = "%.1f",       # Format numbers to 2 decimal places
+#        fontsize_number = 10,         # Set font size for numbers
+#         fontsize_row = 10,            # Set font size for row labels
+#         fontsize_col = 10,            # Set font size for column labels
+#         angle_col = 45,               # Rotate column labels (bottom text) by 45 degrees
+#         main = "Correlation Between Popularity and Other Variables", # Title
+#         legend = TRUE,                # Show legend
+#         border_color = "gray",        # Set border color of the cells
+#         cellwidth = 40,               # Set width of the cells
+#         cellheight = 40,              # Set height of the cells         
+#         legend_title = "Correlation", # TITLE
+#         legend_labels = c("-1", "0", "1"),  
+         #legend_breaks = c(-1, 0, 1)   
+#         )
+#dev.off()
+#install.packages("png")
+#library(png)
+#heatmap_data <- png::readPNG("D:/R_R studio/Practice Worksheet/heatmap_image.png")
+#heatmap_image <- rasterGrob("D:/R_R studio/Practice Worksheet/heatmap_image.png", width = unit(1, "npc"), height = unit(1, "npc"))
+
+
+#grid.arrange(plot_res_1,plot_res_2,plot_res_3,heatmap_image, nrow = 2)
+
+#grid.lines(x = c(0, 1), y = c(5.85 / nrow(cor_matrix), 5.85 / nrow(cor_matrix)), gp = gpar(col = "grey", lwd = 2)) # Horizontal line through row top of popularity
+#grid.lines(x = c(0, 1), y = c(5.15 / nrow(cor_matrix), 5.15 / nrow(cor_matrix)), gp = gpar(col = "grey", lwd = 2)) # Horizontal line through row bottom of popularity
+
+#grid.lines(x = c(4.29 / ncol(cor_matrix), 4.29/ ncol(cor_matrix)), y = c(0, 1), gp = gpar(col = "grey", lwd = 2)) # Vertical line through column left side of popularity
+#grid.lines(x = c(3.68 / ncol(cor_matrix), 3.68/ ncol(cor_matrix)), y = c(0, 1), gp = gpar(col = "grey", lwd = 2)) # Vertical line through column right side of popularity
+library(reshape2) # For transforming the matrix into long format
+
+# Select columns (remove the comment if not done already)
+# selected_columns <- pop[, c("popularity", "duration_ms", "key", "acousticness", "danceability", 
+#                             "energy", "instrumentalness", "liveness", "loudness", "speechiness")]
+
+# Calculate the correlation matrix
+cor_matrix <- cor(selected_columns)
+
+# Optional: Convert row and column names to uppercase
+colnames(cor_matrix) <- toupper(colnames(cor_matrix))
+rownames(cor_matrix) <- toupper(rownames(cor_matrix))
+
+# Convert the correlation matrix into long format for ggplot2
+cor_data <- melt(cor_matrix)
+
+# Create the heatmap using ggplot2
+plot_res_4 <- ggplot(cor_data, aes(x = Var1, y = Var2, fill = value)) +
+  geom_tile(color = "white") + # Add white borders to cells
+  scale_fill_gradient2(low = "lightgreen", mid = "white", high = "lightblue", midpoint = 0) + # Color gradient
+  labs(
+    title = "Correlation Between Popularity and Other Variables", # Title
+    x = NULL, # Remove x-axis label
+    y = NULL, # Remove y-axis label
+    fill = "Correlation",
+    caption = "MUSICOSET"# Legend title
+  ) +
+  theme_minimal() + # Minimal theme for a clean look
+  theme(
+    axis.text.x = element_text(angle = 45, hjust = 1, size = 10), # Rotate x-axis labels
+    axis.text.y = element_text(size = 10), # Adjust y-axis label size
+    panel.grid.major = element_blank(), # Remove major grid lines
+    panel.grid.minor = element_blank()  # Remove minor grid lines
+  )
+
+
+# Arrange the plots
+
+
+grid.arrange(plot_res_1,plot_res_2,plot_res_3,plot_res_4, nrow = 2,
+             top = textGrob("Relationship Between Popularity and Features", gp = gpar(
+                              fontface = "bold", 
+               fontsize = 20)))
